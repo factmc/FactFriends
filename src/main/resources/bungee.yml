@@ -1,0 +1,6 @@
+name: FactFriends
+main: net.factmc.FactFriends.bungee.Main
+version: 2.2.1
+author: TrollyLoki
+
+depend: [FactCore]

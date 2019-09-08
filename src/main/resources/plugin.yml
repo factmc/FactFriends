@@ -1,0 +1,12 @@
+name: FactFriends
+main: net.factmc.FactFriends.bukkit.Main
+version: 2.2.1
+author: TrollyLoki
+
+depend: [FactCore]
+
+api-version: 1.14
+
+commands:
+  friends:
+    aliases: 'f'
