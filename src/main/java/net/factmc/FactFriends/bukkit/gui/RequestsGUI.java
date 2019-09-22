@@ -1,35 +1,33 @@
 package net.factmc.FactFriends.bukkit.gui;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.SkullMeta;
-
-import net.factmc.FactFriends.bukkit.listeners.ProxyConnector;
+import org.bukkit.persistence.PersistentDataType;
+import net.factmc.FactCore.FactSQL;
+import net.factmc.FactCore.bukkit.InventoryControl;
+import net.factmc.FactFriends.Data;
 
 public class RequestsGUI implements Listener {
 	
 	private static boolean loaded = false;
-	final public static int SIZE = 27;
-	final public static String TITLE = ChatColor.DARK_PURPLE + "Active Friend Requests";
+	final public static int SIZE = 45;
+	final public static String TITLE = ChatColor.DARK_PURPLE + "Friends";
 	
-	public static void request(Player player) {
-		ProxyConnector.getRequests(player);
-	}
-	
-	public static void open(Player player, List<List<String>> requestList) {
+	public static void open(Player player) {
 		
 		Inventory gui = player.getServer().createInventory(player, SIZE, TITLE);
 		
@@ -38,120 +36,103 @@ public class RequestsGUI implements Listener {
 			gui.setItem(i, panes);
 		}
 		
-		ItemStack back = FriendsGUI.getStack(Material.ARROW, ChatColor.LIGHT_PURPLE + "Return to friends list",
+		ItemStack back = InventoryControl.getItemStack(Material.ARROW, ChatColor.LIGHT_PURPLE + "Return to friends list",
 				ChatColor.GRAY + "Return to the main friends menu");
-		gui.setItem(22, back);
+		gui.setItem(22, InventoryControl.addPersistentData(back, FriendsGUI.TYPE_KEY, "BACK"));
 		
-		ItemStack incomingItem = FriendsGUI.getStack(Material.GOLDEN_CARROT, ChatColor.GREEN + "Incoming Requests");
+		ItemStack incomingItem = InventoryControl.getItemStack(Material.GOLDEN_CARROT, ChatColor.GREEN + "Incoming Requests");
 		gui.setItem(2, incomingItem);
 		
-		ItemStack outgoingItem = FriendsGUI.getStack(Material.SPECTRAL_ARROW, ChatColor.RED + "Outgoing Requests");
+		ItemStack outgoingItem = InventoryControl.getItemStack(Material.SPECTRAL_ARROW, ChatColor.RED + "Outgoing Requests");
 		gui.setItem(6, outgoingItem);
 		
 		
-		// Incoming
-		int j = 9;
-		List<String> incoming = requestList.get(0);
-		for (int i = 0; i < incoming.size(); i++) {
-			if (incoming.get(i).equals("null")) break;
+		int j = 9; int k = 14;
+		List<Map<String, Object>> rows = Data.getRequests(player.getUniqueId());
+		for (Map<String, Object> map : rows) {
 			
-			UUID uuid = UUID.fromString(incoming.get(i));
-			String name = Bukkit.getOfflinePlayer(uuid).getName();
+			UUID uuid = UUID.fromString(map.get("UUID").toString());
+			UUID friend = UUID.fromString(map.get("FRIEND").toString());
 			
-			ItemStack skull = FriendsGUI.getSkull(uuid, ChatColor.RESET + name,
-					ChatColor.GREEN + "Left click to accept", ChatColor.RED + "Right click to deny");
-			gui.setItem(j, skull);
+			if (friend.equals(player.getUniqueId())) {
+				if (j >= gui.getSize()) continue;
+				
+				String name = FactSQL.getInstance().getName(uuid);
+				ItemStack skull = InventoryControl.getHead(name, name,
+						ChatColor.GREEN + "Left click to accept", ChatColor.RED + "Right click to deny");
+				skull = InventoryControl.addPersistentData(skull, new NamespacedKey[] {FriendsGUI.TYPE_KEY, FriendsGUI.DATA_KEY},
+						new String[] {"INCOMING", uuid.toString()});
+				gui.setItem(j, skull);
+				
+				if ((j-3)%9 == 0) j += 6;
+				else j++;
+			}
 			
-			if ((j-3)%9 == 0) j += 6;
-			else j++;
+			else {
+				if (k >= gui.getSize()) continue;
+				
+				String name = FactSQL.getInstance().getName(friend);
+				ItemStack skull = InventoryControl.getHead(name, name, ChatColor.RED + "Click to cancel");
+				skull = InventoryControl.addPersistentData(skull, new NamespacedKey[] {FriendsGUI.TYPE_KEY, FriendsGUI.DATA_KEY},
+						new String[] {"OUTGOING", friend.toString()});
+				gui.setItem(k, skull);
+				
+				if ((k+1)%9 == 0) k += 6;
+				else k++;
+			}
 			
 		}
-		
-		// Outgoing
-		int k = 14;
-		List<String> outgoing = requestList.get(1);
-		for (int i = 0; i < outgoing.size(); i++) {
-			if (outgoing.get(i).equals("null")) break;
-			
-			UUID uuid = UUID.fromString(outgoing.get(i));
-			String name = Bukkit.getOfflinePlayer(uuid).getName();
-			
-			ItemStack skull = FriendsGUI.getSkull(uuid, ChatColor.RESET + name,
-					ChatColor.RED + "Click to cancel");
-			gui.setItem(k, skull);
-			
-			if ((k+1)%9 == 0) k += 6;
-			else k++;
-			
-		}
-		
 		
 		loaded = true;
 		player.openInventory(gui);
 		
 	}
 	
-	
 	@EventHandler(priority = EventPriority.HIGH)
 	public void onItemClicked(InventoryClickEvent event) {
 		if (!loaded) return;
-		if (event.getView().getTitle().equalsIgnoreCase(TITLE) && event.getInventory().getSize() == SIZE) {
+		if (event.getInventory().getType() == InventoryType.CHEST && event.getInventory().getHolder() instanceof Player
+				&& event.getView().getTitle().equalsIgnoreCase(TITLE)) {
 			
 			if ((event.getCurrentItem() == null) || (event.getCurrentItem().getType().equals(Material.AIR))) {
                 return;
             }
 			event.setCancelled(true);
-			final Player player = (Player) event.getWhoClicked();
+			Player player = (Player) event.getWhoClicked();
 			
-			ItemStack clicked = event.getCurrentItem();
-			String name = clicked.getItemMeta().getDisplayName();
-			if (name == null) return;
-			List<String> lore = clicked.getItemMeta().getLore();
-			if (lore == null) lore = new ArrayList<String>();
+			String type = event.getCurrentItem().getItemMeta().getPersistentDataContainer().get(FriendsGUI.TYPE_KEY, PersistentDataType.STRING);
+			if (type == null) return;
 			
+			if (type.equals("BACK")) {
+				FriendsGUI.open(player);
+				return;
+			}
 			
-			if (name.equalsIgnoreCase(ChatColor.LIGHT_PURPLE + "Return to friends list")) {
+			else if (type.equals("INCOMING")) {
 				
-				FriendsGUI.request(player);
+				UUID uuid = UUID.fromString(
+						event.getCurrentItem().getItemMeta().getPersistentDataContainer().get(FriendsGUI.DATA_KEY, PersistentDataType.STRING));
+				
+				boolean response = false;
+				if (event.getClick() == ClickType.LEFT) response = true;
+				
+				Data.respondToRequest(uuid, player.getUniqueId(), response);
+				open(player);
+				return;
 				
 			}
 			
-			else if (lore.size() > 0) {
+			else if (type.equals("OUTGOING")) {
 				
-				// Incoming
-				if (lore.get(0).equalsIgnoreCase(ChatColor.GREEN + "Left click to accept")) {
-					
-					UUID uuid = ((SkullMeta)clicked.getItemMeta()).getOwningPlayer().getUniqueId();
-					
-					if (event.getAction() == InventoryAction.PICKUP_HALF) {
-						
-						ProxyConnector.deny(player, uuid);
-						
-					}
-					
-					else {
-						
-						ProxyConnector.accept(player, uuid);
-						
-					}
-					
-				}
-				
-				// Outgoing
-				else {
-					
-					UUID uuid = ((SkullMeta)clicked.getItemMeta()).getOwningPlayer().getUniqueId();
-					
-					ProxyConnector.cancel(player, uuid);
-					
-				}
-				
+				UUID friend = UUID.fromString(
+						event.getCurrentItem().getItemMeta().getPersistentDataContainer().get(FriendsGUI.DATA_KEY, PersistentDataType.STRING));
+				Data.removeRequest(player.getUniqueId(), friend);
+				open(player);
+				return;
 				
 			}
 			
 		}
-			
-			
 		
 	}
 	

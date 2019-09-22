@@ -2,9 +2,9 @@ package net.factmc.FactFriends.bungee.listeners;
 
 import java.util.UUID;
 
-import net.factmc.FactFriends.bungee.Data;
-import net.factmc.FactFriends.bungee.Main;
+import net.factmc.FactFriends.Data;
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -21,7 +21,7 @@ public class FriendMessages implements Listener {
 		ProxiedPlayer player = event.getPlayer();
 		
 		sendMsgToFriends(player.getUniqueId(),
-				new TextComponent(Main.prefix + ChatColor.BLUE + player.getName() + " joined the network"));
+				new TextComponent(Data.PREFIX + ChatColor.BLUE + player.getName() + " joined the network"));
 		
 	}
 	
@@ -30,7 +30,7 @@ public class FriendMessages implements Listener {
 		ProxiedPlayer player = event.getPlayer();
 		
 		sendMsgToFriends(player.getUniqueId(),
-				new TextComponent(Main.prefix + ChatColor.BLUE + player.getName() + " left the network"));
+				new TextComponent(Data.PREFIX + ChatColor.BLUE + player.getName() + " left the network"));
 		
 	}
 	
@@ -40,15 +40,14 @@ public class FriendMessages implements Listener {
 		String server = event.getPlayer().getServer().getInfo().getName();
 		
 		sendMsgToFriends(player.getUniqueId(),
-				new TextComponent(Main.prefix + ChatColor.BLUE + player.getName() + " joined the " + server + " server"));
+				new TextComponent(Data.PREFIX + ChatColor.BLUE + player.getName() + " joined the " + server + " server"));
 		
 	}
 	
 	public void sendMsgToFriends(UUID uuid, BaseComponent msg) {
-		for (ProxiedPlayer next : Main.getPlugin().getProxy().getPlayers()) {
-			if (Data.getFriend(next.getUniqueId(), uuid) != null) {
-				next.sendMessage(msg);
-			}
+		for (UUID friend : Data.getFriends(uuid)) {
+			ProxiedPlayer player = ProxyServer.getInstance().getPlayer(friend);
+			if (player != null) player.sendMessage(msg);
 		}
 	}
 	

@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.factmc.FactFriends</groupId>
   <artifactId>FactFriends</artifactId>
-  <version>2.2.1</version>
+  <version>3.0</version>
   
   <repositories>
     <repository>

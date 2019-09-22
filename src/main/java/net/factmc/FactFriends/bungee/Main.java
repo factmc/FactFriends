@@ -1,52 +1,41 @@
 package net.factmc.FactFriends.bungee;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
 import net.factmc.FactFriends.bungee.listeners.*;
-import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 
 public class Main extends Plugin implements Listener {
 	
 	public static Plugin plugin;
-	public static String prefix = ChatColor.DARK_GRAY + "["
-				+ ChatColor.DARK_PURPLE + ChatColor.BOLD + "Friends"
-				+ ChatColor.DARK_GRAY + "] ";
 	
     @Override
     public void onEnable() {
     	plugin = this;
-    	registerEvents();
-    	//registerCommands();
     	
-    	// Register Plugin Messages
-    	this.getProxy().registerChannel("factfriends:system");
-    	this.getProxy().getPluginManager().registerListener(this, new ServerConnector());
+    	registerPluginMessages();
+    	registerEvents();
     	
     }
     
     @Override
     public void onDisable() {
-    	plugin.getProxy().getScheduler().cancel(plugin);
-    	plugin.getLogger().info("Cancelled Tasks");
-    	
     	plugin = null;
     }
     
-    public static void registerEvents() {
-    	List<Listener> listeners = new ArrayList<Listener>();
-    	listeners.add(new FriendMessages());
-    	
-        for (Listener listener : listeners) {
-            plugin.getProxy().getPluginManager().registerListener(plugin, listener);
-        }
+    public void registerPluginMessages() {
+    	plugin.getProxy().registerChannel("factfriends:status");
+    	plugin.getProxy().getPluginManager().registerListener(plugin, new FriendStatus());
     }
     
-    public static void registerCommands() {
+    public void registerEvents() {
+    	plugin.getProxy().getPluginManager().registerListener(plugin, new FriendMessages());	
+    }
+    
+    public void registerCommands() {
     	//plugin.getProxy().getPluginManager().registerCommand(plugin, new FriendCommand());
     }
     
@@ -55,14 +44,13 @@ public class Main extends Plugin implements Listener {
     }
     
     
-    
-    public static boolean send(ProxiedPlayer player, Server server) {
-    	if (player.getServer() == server) {
-    		return false;
-    	}
-    	
-    	player.connect(server.getInfo());
-    	return true;
-    }
+    public static void sendMessage(UUID uuid, String message) {
+		
+		ProxiedPlayer player = ProxyServer.getInstance().getPlayer(uuid);
+		if (player != null) {
+			player.sendMessage(new net.md_5.bungee.api.chat.TextComponent(message));
+		}
+		
+	}
     
 }
