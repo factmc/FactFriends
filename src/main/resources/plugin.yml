@@ -1,6 +1,6 @@
-name: FactFriends
-main: net.factmc.FactFriends.bukkit.Main
-version: 3.0
+name: ${project.artifactId}
+main: ${project.groupId}.bukkit.Main
+version: ${project.version}
 author: TrollyLoki
 
 depend: [FactCore]

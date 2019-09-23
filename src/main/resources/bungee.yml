@@ -1,6 +1,6 @@
-name: FactFriends
-main: net.factmc.FactFriends.bungee.Main
-version: 3.0
+name: ${project.artifactId}
+main: ${project.groupId}.bungee.Main
+version: ${project.version}
 author: TrollyLoki
 
 depend: [FactCore]
