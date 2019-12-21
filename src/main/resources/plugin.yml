@@ -5,7 +5,7 @@ author: TrollyLoki
 
 depend: [FactCore]
 
-api-version: 1.14
+api-version: 1.15
 
 commands:
   friends:
