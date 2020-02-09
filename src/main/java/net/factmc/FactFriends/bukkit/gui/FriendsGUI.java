@@ -73,6 +73,10 @@ public class FriendsGUI implements Listener, PluginMessageListener {
 			
 			UUID uuid = friends.get(i);
 			String name = FactSQL.getInstance().getName(uuid);
+			if (name == null) {
+				Main.getPlugin().getLogger().warning(player.getName() + " has friend '" + uuid + "' but no player could be found with that UUID");
+				continue;
+			}
 			
 			ItemStack skull = InventoryControl.getHead(name, name, getStatusMsg("offline"),
 					ChatColor.BLUE + "Left click to join", ChatColor.RED + "Right click to remove");
