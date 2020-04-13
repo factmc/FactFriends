@@ -59,7 +59,7 @@ public class FriendStatus implements Listener {
 				List<String> statusList = new ArrayList<String>();
 				for (UUID uuid : list) {
 					ProxiedPlayer p = ProxyServer.getInstance().getPlayer(uuid);
-					if (p != null) statusList.add(player.getServer().getInfo().getName());
+					if (p != null) statusList.add(p.getServer().getInfo().getName());
 					else statusList.add("offline");
 				}
 				sendStatusList(statusList, player);
